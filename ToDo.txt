@@ -1,3 +1,4 @@
 To-do:
 Set voltage dwell to 1 minute before reading a data point
 Output formatted text to serial monitor for debugging and observation while data is being taken
+More things to do
