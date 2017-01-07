@@ -1,6 +1,7 @@
 import time
 import os
 import RPi.GPIO as GPIO
+import Adafruit_DHT
 
 GPIO.setmode(GPIO.BCM)
 
@@ -18,7 +19,7 @@ def safeFilename(baseFilename, suffix):
 
 def safeWriteTextToFile(filename, text):
     # Accepts any string. Automatically add newline characters to the end. Closes the file at the end of writing
-    file = open(filename,'w')
+    file = open(filename,"a")
     text = text + '\n'
     file.write(text)
     file.close()
@@ -28,7 +29,7 @@ def getEnvironmentData(pin):
 
     sensor = Adafruit_DHT.AM2302
     
-    humidity, tempC = Adafruit_DHT.read_retry(sensor, sensorPin)
+    humidity, tempC = Adafruit_DHT.read_retry(sensor, pin)
     
     return (tempC, humidity)
 
@@ -77,7 +78,7 @@ def readadc(adcnum, clockpin, mosipin, misopin, cspin):
     return adcout # Returns floating point value for bit-wise collected number
         
 
-def getMoistureData(isEven,n, delay):
+def initializeADC():
     # constants
     spiClock = 18
     spiMiso = 23
@@ -96,24 +97,37 @@ def getMoistureData(isEven,n, delay):
     GPIO.setup(probeLine1, GPIO.OUT)
     GPIO.setup(probeLine2, GPIO.OUT)
     
+def getMoistureData(isEven,n, delay):
+    # constants
+    spiClock = 18
+    spiMiso = 23
+    spiMosi = 24
+    spiCs = 25
+
+    probeLine1 = 17
+    probeLine2 = 22
+
     sensorVoltages = [0.0]*8
     if isEven == True:
         # Turn on sensors - set transistor pin x high
-        print('Turning on even side sensors')
+        #print('Turning on even side sensors')
         GPIO.output(probeLine1, True)
     else:
         # Turn on sensors - set transistor pin y high
-        print('Turning on odd side sensors')
+        #print('Turning on odd side sensors')
         GPIO.output(probeLine2, True)
 
     # Let everything equalize in soil before taking data
+    #print("Waiting before taking data")
     time.sleep(delay)
-
+    #print("About to take data")
+    
     # Take data
     for sensor in range(n):
         sensorVoltages[sensor] = readadc(sensor, spiClock, spiMosi, spiMiso, spiCs)
         #print('Collecting Sensor ' + repr(sensor) + ' data')
 
+    #print("Took data")
     # Set both transistor pins low
     GPIO.output(probeLine1, False)
     GPIO.output(probeLine2, False)
